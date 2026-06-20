@@ -1,0 +1,53 @@
+# ============================================================
+# HALA Docker Compose overlay
+# Usage: docker compose -f docker-compose.den-dev.yml -f docker-compose.hala.yml up -d
+# ============================================================
+
+services:
+  den-api:
+    env_file:
+      - ../../hala.env.example   # replace with actual .env in production
+    restart: unless-stopped
+    networks:
+      - hala-internal
+
+  den-web:
+    restart: unless-stopped
+    networks:
+      - hala-internal
+
+  den-worker-proxy:
+    restart: unless-stopped
+    networks:
+      - hala-internal
+
+  inference:
+    env_file:
+      - ../../hala-inference.env.example   # replace with actual .env in production
+    restart: unless-stopped
+    networks:
+      - hala-internal
+    # Do NOT expose inference port externally — internal network only
+    ports: []
+    expose:
+      - "8791"
+
+  mysql:
+    restart: unless-stopped
+    networks:
+      - hala-internal
+    # Do NOT expose MySQL port externally
+    ports: []
+    expose:
+      - "3306"
+    volumes:
+      - hala-mysql-data:/var/lib/mysql
+
+networks:
+  hala-internal:
+    driver: bridge
+    internal: false   # set to true if all services are behind a reverse proxy
+
+volumes:
+  hala-mysql-data:
+    driver: local
