@@ -51,42 +51,43 @@ export const INFERENCE_WINDOW_DURATIONS_MS: Record<
   monthly: 30 * 24 * 60 * 60 * 1000,
 } as const;
 
-// For upstreamModel values, please get from models.dev/api.json provider = openrouter.models.id
+// HALA: upstreamModel values use Groq model IDs.
+// Groq API reference: https://console.groq.com/docs/models
+// OPENROUTER_UPSTREAM_URL must be set to https://api.groq.com/openai/v1
 
 export const INFERENCE_MODEL_ALIASES = {
-  "tencent/hy3-preview": {
-    upstreamModel: "tencent/hy3-preview",
-    displayName: "OpenWork: Hy3 Preview",
+  // General-purpose — fast, high quality
+  "groq/llama-3.3-70b-versatile": {
+    upstreamModel: "llama-3.3-70b-versatile",
+    displayName: "HALA: Llama 3.3 70B",
     enabled: true,
     usageFactor: 1,
   },
-  "moonshotai/kimi-k2.6": {
-    upstreamModel: "moonshotai/kimi-k2.6",
-    displayName: "OpenWork: Kimi K2.6",
+  // Code-heavy tasks
+  "groq/llama-3.1-70b-versatile": {
+    upstreamModel: "llama-3.1-70b-versatile",
+    displayName: "HALA: Llama 3.1 70B",
     enabled: true,
     usageFactor: 1,
   },
-  "deepseek/deepseek-v4-flash": {
-    upstreamModel: "deepseek/deepseek-v4-flash",
-    displayName: "OpenWork: DeepSeek V4 Flash",
+  // Lightweight / fast responses
+  "groq/llama3-8b-8192": {
+    upstreamModel: "llama3-8b-8192",
+    displayName: "HALA: Llama 3 8B (Fast)",
     enabled: true,
     usageFactor: 1,
   },
-  "minimax/minimax-m2.7": {
-    upstreamModel: "minimax/minimax-m2.7",
-    displayName: "OpenWork: MiniMax M2.7",
+  // Low-latency instant responses
+  "groq/llama-3.1-8b-instant": {
+    upstreamModel: "llama-3.1-8b-instant",
+    displayName: "HALA: Llama 3.1 8B Instant",
     enabled: true,
     usageFactor: 1,
   },
-  "minimax/minimax-m3": {
-    upstreamModel: "minimax/minimax-m3",
-    displayName: "OpenWork: MiniMax M3",
-    enabled: true,
-    usageFactor: 1,
-  },
-  "z-ai/glm-5.1": {
-    upstreamModel: "z-ai/glm-5.1",
-    displayName: "OpenWork: GLM-5.1",
+  // Multi-lingual + Arabic support
+  "groq/mixtral-8x7b-32768": {
+    upstreamModel: "mixtral-8x7b-32768",
+    displayName: "HALA: Mixtral 8x7B",
     enabled: true,
     usageFactor: 1,
   },
