@@ -18,7 +18,7 @@ HALA runs the full enterprise stack (`/ee/`) self-hosted on-premises using Docke
 | `den-api` | 8788 | REST API + Auth (SAML/SSO) |
 | `den-web` | 3005 | Next.js web UI for staff |
 | `den-worker-proxy` | 8789 | Agent worker management |
-| `inference` | 8791 | LLM inference proxy (Groq) |
+| `inference` | 8791 | LLM inference proxy (Groq deprecated — migrating to OCI) |
 | `mysql` | 3306 | State database |
 
 ### Quick Start
@@ -42,25 +42,79 @@ docker exec -it den-api pnpm db:migrate
 
 ---
 
-## Groq Inference
+## Groq Inference (Deprecated)
 
-HALA uses Groq as the direct LLM provider (bypassing OpenRouter).
+> **Status: deprecated as of 2026-07-23.** The Groq partnership has ended and Groq is no
+> longer a supplier for HALA. This section only ever applied to the self-hosted `ee/`
+> enterprise stack (`ee/apps/inference`) — it has no bearing on running the desktop app
+> locally, which uses Ollama instead (see [Local Development on macOS](#local-development-on-macos-apple-silicon-ollama)
+> below).
 
-Set in `ee/apps/inference/.env`:
-```env
-OPENROUTER_UPSTREAM_URL=https://api.groq.com/openai/v1
-```
+Historically HALA used Groq as the direct LLM provider (bypassing OpenRouter), via
+`OPENROUTER_UPSTREAM_URL=https://api.groq.com/openai/v1` in `ee/apps/inference/.env`. The
+corresponding model aliases in `packages/types/src/den/inference.ts` are now all
+`enabled: false` and kept only for reference — do not re-enable or issue new Groq keys.
 
-The provider key stored in the DB must be your Groq API key. Model aliases are defined in
-`ee/apps/inference/src/model-catalog.ts` — see `hala-models.md` for the recommended Groq model list.
-
-**Recommended Groq models for HALA:**
+**Former Groq models (now disabled):**
 
 | Alias | Groq Model ID | Use case |
 |---|---|---|
 | `fast` | `llama-3.3-70b-versatile` | General tasks |
 | `code` | `llama-3.1-70b-versatile` | Code-heavy workflows |
 | `quick` | `llama3-8b-8192` | Simple/fast tasks |
+
+---
+
+## OCI Self-Hosted Inference (Planned)
+
+HALA is deploying its own models on OCI GPUs to replace Groq for the self-hosted `ee/`
+stack. This isn't live yet — the following config slots are reserved so the migration is a
+drop-in once endpoint details exist:
+
+- `packages/types/src/den/inference.ts` — `"oci/default"` alias in `INFERENCE_MODEL_ALIASES`
+  (currently `enabled: false`, `upstreamModel: "TBD"`).
+- `hala-inference.env.example` — commented-out `OCI_INFERENCE_UPSTREAM_URL` placeholder.
+
+To activate: fill in the real upstream model ID(s) and endpoint URL in both places, flip the
+relevant aliases to `enabled: true`, and point `OPENROUTER_UPSTREAM_URL` at the OCI endpoint.
+
+---
+
+## Local Development on macOS (Apple Silicon, Ollama)
+
+While the OCI self-hosted stack is being stood up, use this fork locally on a Mac with
+[Ollama](https://ollama.com) instead of the Groq/`ee/` enterprise stack. Ollama support is
+already built into the desktop app — no extra wiring needed beyond installing the app and
+pulling a model.
+
+### Requirements
+- Node.js + `pnpm`, Rust toolchain, Xcode Command Line Tools, `opencode` CLI on PATH — see
+  the main `README.md` "Quick start" section for full prerequisites.
+- Ollama app installed and running (`ollama serve`, or just launch the app).
+
+### Model sizing for 18GB unified memory (e.g. MacBook Pro M3, 18GB)
+Stick to 7B–8B quantized (q4) models — they use roughly 4–5GB and leave headroom for macOS
+and the app itself. The desktop app's default, `qwen2.5-coder:7b`, is a good fit. Avoid
+14B+ models and unquantized or 70B models (like the former Groq `llama-3.3-70b-versatile`) —
+they won't fit comfortably in 18GB alongside everything else running on the machine.
+
+```bash
+ollama pull qwen2.5-coder:7b
+```
+
+### Run the app
+```bash
+pnpm install
+pnpm dev       # desktop app
+# or: pnpm dev:ui   # web UI only
+```
+
+### Wire up Ollama
+In the app, go to **Settings → Extensions → Ollama**. It auto-detects a running local
+Ollama server at `http://localhost:11434`, lists any models you've already pulled, and lets
+you pull new ones. Click **Add to workspace** — "Use as default model in workspace" is
+pre-checked, so this single click makes Ollama the default provider for the workspace. No
+manual `opencode.json` editing or `ee/` stack setup required for this path.
 
 ---
 
